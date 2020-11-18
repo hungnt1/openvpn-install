@@ -793,6 +793,7 @@ persist-remote-ip
 push "persist-key"
 push "persist-tun"
 topology subnet
+management localhost 7505
 server 10.8.0.0 255.255.0.0
 ifconfig-pool-persist ipp.txt" >>/etc/openvpn/server.conf
 
