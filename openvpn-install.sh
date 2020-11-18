@@ -4,18 +4,26 @@
 # Secure OpenVPN server installer for Debian, Ubuntu, CentOS, Amazon Linux 2, Fedora and Arch Linux
 # https://github.com/angristan/openvpn-install
 
+
+# rewrite Hung Nguyen Trong
+# gmail : sudo.nguyenhung@gmail.com
+
+
+#  check permision 
 function isRoot() {
 	if [ "$EUID" -ne 0 ]; then
 		return 1
 	fi
 }
 
+# check tun
 function tunAvailable() {
 	if [ ! -e /dev/net/tun ]; then
 		return 1
 	fi
 }
 
+#  check os to install
 function checkOS() {
 	if [[ -e /etc/debian_version ]]; then
 		OS="debian"
@@ -23,7 +31,7 @@ function checkOS() {
 
 		if [[ $ID == "debian" || $ID == "raspbian" ]]; then
 			if [[ $VERSION_ID -lt 9 ]]; then
-				echo "⚠️ Your version of Debian is not supported."
+				echo "âš ï¸ Your version of Debian is not supported."
 				echo ""
 				echo "However, if you're using Debian >= 9 or unstable/testing then you can continue, at your own risk."
 				echo ""
@@ -38,7 +46,7 @@ function checkOS() {
 			OS="ubuntu"
 			MAJOR_UBUNTU_VERSION=$(echo "$VERSION_ID" | cut -d '.' -f1)
 			if [[ $MAJOR_UBUNTU_VERSION -lt 16 ]]; then
-				echo "⚠️ Your version of Ubuntu is not supported."
+				echo "âš ï¸ Your version of Ubuntu is not supported."
 				echo ""
 				echo "However, if you're using Ubuntu >= 16.04 or beta, then you can continue, at your own risk."
 				echo ""
@@ -58,7 +66,7 @@ function checkOS() {
 		if [[ $ID == "centos" ]]; then
 			OS="centos"
 			if [[ ! $VERSION_ID =~ (7|8) ]]; then
-				echo "⚠️ Your version of CentOS is not supported."
+				echo "âš ï¸ Your version of CentOS is not supported."
 				echo ""
 				echo "The script only support CentOS 7 and CentOS 8."
 				echo ""
@@ -68,7 +76,7 @@ function checkOS() {
 		if [[ $ID == "amzn" ]]; then
 			OS="amzn"
 			if [[ $VERSION_ID != "2" ]]; then
-				echo "⚠️ Your version of Amazon Linux is not supported."
+				echo "âš ï¸ Your version of Amazon Linux is not supported."
 				echo ""
 				echo "The script only support Amazon Linux 2."
 				echo ""
@@ -83,6 +91,8 @@ function checkOS() {
 	fi
 }
 
+#  precheck
+
 function initialCheck() {
 	if ! isRoot; then
 		echo "Sorry, you need to run this as root"
@@ -95,6 +105,8 @@ function initialCheck() {
 	checkOS
 }
 
+#  install client dns cache
+
 function installUnbound() {
 	# If Unbound isn't installed, install it
 	if [[ ! -e /etc/unbound/unbound.conf ]]; then
@@ -104,7 +116,7 @@ function installUnbound() {
 
 			# Configuration
 			echo 'interface: 10.8.0.1
-access-control: 10.8.0.1/24 allow
+access-control: 10.8.0.1/16 allow
 hide-identity: yes
 hide-version: yes
 use-caps-for-id: yes
@@ -115,7 +127,7 @@ prefetch: yes' >>/etc/unbound/unbound.conf
 
 			# Configuration
 			sed -i 's|# interface: 0.0.0.0$|interface: 10.8.0.1|' /etc/unbound/unbound.conf
-			sed -i 's|# access-control: 127.0.0.0/8 allow|access-control: 10.8.0.1/24 allow|' /etc/unbound/unbound.conf
+			sed -i 's|# access-control: 127.0.0.0/8 allow|access-control: 10.8.0.1/16 allow|' /etc/unbound/unbound.conf
 			sed -i 's|# hide-identity: no|hide-identity: yes|' /etc/unbound/unbound.conf
 			sed -i 's|# hide-version: no|hide-version: yes|' /etc/unbound/unbound.conf
 			sed -i 's|use-caps-for-id: no|use-caps-for-id: yes|' /etc/unbound/unbound.conf
@@ -125,7 +137,7 @@ prefetch: yes' >>/etc/unbound/unbound.conf
 
 			# Configuration
 			sed -i 's|# interface: 0.0.0.0$|interface: 10.8.0.1|' /etc/unbound/unbound.conf
-			sed -i 's|# access-control: 127.0.0.0/8 allow|access-control: 10.8.0.1/24 allow|' /etc/unbound/unbound.conf
+			sed -i 's|# access-control: 127.0.0.0/8 allow|access-control: 10.8.0.1/16 allow|' /etc/unbound/unbound.conf
 			sed -i 's|# hide-identity: no|hide-identity: yes|' /etc/unbound/unbound.conf
 			sed -i 's|# hide-version: no|hide-version: yes|' /etc/unbound/unbound.conf
 			sed -i 's|# use-caps-for-id: no|use-caps-for-id: yes|' /etc/unbound/unbound.conf
@@ -148,7 +160,7 @@ prefetch: yes' >>/etc/unbound/unbound.conf
 	trust-anchor-file: trusted-key.key
 	root-hints: root.hints
 	interface: 10.8.0.1
-	access-control: 10.8.0.1/24 allow
+	access-control: 10.8.0.1/16 allow
 	port: 53
 	num-threads: 2
 	use-caps-for-id: yes
@@ -183,7 +195,7 @@ private-address: ::ffff:0:0/96" >>/etc/unbound/unbound.conf
 		# Add Unbound 'server' for the OpenVPN subnet
 		echo 'server:
 interface: 10.8.0.1
-access-control: 10.8.0.1/24 allow
+access-control: 10.8.0.1/16 allow
 hide-identity: yes
 hide-version: yes
 use-caps-for-id: yes
@@ -207,10 +219,12 @@ access-control: fd42:42:42:42::/112 allow' >>/etc/unbound/openvpn.conf
 	systemctl restart unbound
 }
 
+#  cac cau hoi cai dati
+
 function installQuestions() {
 	echo "Welcome to the OpenVPN installer!"
-	echo "The git repository is available at: https://github.com/angristan/openvpn-install"
-	echo ""
+	echo "This OpenVPN script used in AI Platform"
+	echo "IVEW.VN - MediTech .JSC"
 
 	echo "I need to ask you a few questions before starting the setup."
 	echo "You can leave the default options and just press enter if you are ok with them."
@@ -229,7 +243,7 @@ function installQuestions() {
 	if [[ $APPROVE_IP =~ n ]]; then
 		read -rp "IP address: " -e -i "$IP" IP
 	fi
-	# If $IP is a private IP address, the server must be behind NAT
+	# If $IP is a private IP address, the server must be behind NAT
 	if echo "$IP" | grep -qE '^(10\.|172\.1[6789]\.|172\.2[0-9]\.|172\.3[01]\.|192\.168)'; then
 		echo ""
 		echo "It seems this server is behind NAT. What is its public IPv4 address or hostname?"
@@ -252,7 +266,7 @@ function installQuestions() {
 	fi
 	if eval "$PING6"; then
 		echo "Your host appears to have IPv6 connectivity."
-		SUGGESTION="y"
+		SUGGESTION="n"
 	else
 		echo "Your host does not appear to have IPv6 connectivity."
 		SUGGESTION="n"
@@ -291,7 +305,7 @@ function installQuestions() {
 	echo "   1) UDP"
 	echo "   2) TCP"
 	until [[ $PROTOCOL_CHOICE =~ ^[1-2]$ ]]; do
-		read -rp "Protocol [1-2]: " -e -i 1 PROTOCOL_CHOICE
+		read -rp "Protocol [1-2]: " -e -i 2 PROTOCOL_CHOICE
 	done
 	case $PROTOCOL_CHOICE in
 	1)
@@ -622,6 +636,7 @@ function installOpenVPN() {
 		else
 			PUBLIC_IP=$(curl -4 https://ifconfig.co)
 		fi
+		#  get public ip to append to server conf
 		ENDPOINT=${ENDPOINT:-$PUBLIC_IP}
 	fi
 
@@ -681,6 +696,8 @@ function installOpenVPN() {
 	fi
 
 	# Find out if the machine uses nogroup or nobody for the permissionless group
+
+	#  use can not do anything in our system
 	if grep -qs "^nogroup:" /etc/group; then
 		NOGROUP=nogroup
 	else
@@ -756,18 +773,27 @@ function installOpenVPN() {
 	echo "port $PORT" >/etc/openvpn/server.conf
 	if [[ $IPV6_SUPPORT == 'n' ]]; then
 		echo "proto $PROTOCOL" >>/etc/openvpn/server.conf
+		# apend character 6 in protocol conf
 	elif [[ $IPV6_SUPPORT == 'y' ]]; then
 		echo "proto ${PROTOCOL}6" >>/etc/openvpn/server.conf
 	fi
+#  static IP for client at first connect with ifconfig-pool-persist
 
 	echo "dev tun
 user nobody
 group $NOGROUP
 persist-key
 persist-tun
-keepalive 10 120
+# keepalive 10 120
+keepalive 1 5
+persist-tun
+persist-key
+persist-local-ip
+persist-remote-ip
+push "persist-key"
+push "persist-tun"
 topology subnet
-server 10.8.0.0 255.255.255.0
+server 10.8.0.0 255.255.0.0
 ifconfig-pool-persist ipp.txt" >>/etc/openvpn/server.conf
 
 	# DNS resolvers
@@ -952,9 +978,20 @@ verb 3" >>/etc/openvpn/server.conf
 	mkdir -p /etc/iptables
 
 	# Script to add rules
+	#  rule forward client go to internet through public NIC on cient
+	#  allow client connect through tun0
+	# allow forward public NIC to tun and reverse
+	# allow public client connect to openvpn vpn port on public
 	echo "#!/bin/sh
-iptables -t nat -I POSTROUTING 1 -s 10.8.0.0/24 -o $NIC -j MASQUERADE
-iptables -I INPUT 1 -i tun0 -j ACCEPT
+iptables -t nat -I POSTROUTING 1 -s 10.8.0.0/16 -o $NIC -j MASQUERADE
+iptables -A INPUT -i $NIC -p tcp --dport 22 -j ACCEPT # Allow SSH
+iptables -A INPUT -i tun0 -p tcp --dport 6443 -j ACCEPT # Allow kube API
+iptables -A INPUT -i tun0 -p tcp --dport 8472 -j ACCEPT # Allow kube flannel
+iptables -A INPUT -i tun0 -p tcp --dport 10250 -j ACCEPT # Allow kube metrics
+iptables -A INPUT -i tun0 -p icmp --icmp-type 8 -j ACCEPT # Allow ping
+iptables -A INPUT -i tun0 -m state --state ESTABLISHED,RELATED -j ACCEPT # Allow responses to our requests
+iptables -A INPUT -i tun0 -j DROP # Drop every other incoming packets
+
 iptables -I FORWARD 1 -i $NIC -o tun0 -j ACCEPT
 iptables -I FORWARD 1 -i tun0 -o $NIC -j ACCEPT
 iptables -I INPUT 1 -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT" >/etc/iptables/add-openvpn-rules.sh
@@ -969,7 +1006,7 @@ ip6tables -I INPUT 1 -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT" >>/etc/iptabl
 
 	# Script to remove rules
 	echo "#!/bin/sh
-iptables -t nat -D POSTROUTING -s 10.8.0.0/24 -o $NIC -j MASQUERADE
+iptables -t nat -D POSTROUTING -s 10.8.0.0/16 -o $NIC -j MASQUERADE
 iptables -D INPUT -i tun0 -j ACCEPT
 iptables -D FORWARD -i $NIC -o tun0 -j ACCEPT
 iptables -D FORWARD -i tun0 -o $NIC -j ACCEPT
@@ -1023,6 +1060,8 @@ WantedBy=multi-user.target" >/etc/systemd/system/iptables-openvpn.service
 dev tun
 resolv-retry infinite
 nobind
+route-nopull
+route 10.8.0.0 255.255.0.0
 persist-key
 persist-tun
 remote-cert-tls server
@@ -1033,8 +1072,13 @@ cipher $CIPHER
 tls-client
 tls-version-min 1.2
 tls-cipher $CC_CIPHER
-ignore-unknown-option block-outside-dns
-setenv opt block-outside-dns # Prevent Windows 10 DNS leak
+keepalive 1 5
+persist-tun
+persist-key
+persist-local-ip
+persist-remote-ip
+push "persist-key"
+push "persist-tun"
 verb 3" >>/etc/openvpn/client-template.txt
 
 	if [[ $COMPRESSION_ENABLED == "y" ]]; then
@@ -1077,7 +1121,7 @@ function newClient() {
 			./easyrsa build-client-full "$CLIENT" nopass
 			;;
 		2)
-			echo "⚠️ You will be asked for the client password below ⚠️"
+			echo "âš ï¸ You will be asked for the client password below âš ï¸"
 			./easyrsa build-client-full "$CLIENT"
 			;;
 		esac
